@@ -156,8 +156,16 @@ Not yet run end to end. Correct these steps the first time they're used.
 1. **DNS.** crap.games DNS is at Namecheap and each game has its own CNAME record. The user adds
    `<subdomain>` pointing to `mcfredrick.github.io.`. Check it with
    `dig +short <subdomain>.crap.games CNAME`.
-2. **Custom domain.** `gh api -X PUT repos/mcfredrick/<subdomain>/pages -f cname=<subdomain>.crap.games`,
-   then `-F https_enforced=true` once the certificate is issued.
+2. **Custom domain.** `gh api -X PUT repos/mcfredrick/<subdomain>/pages -f cname=<subdomain>.crap.games`.
+   GitHub then issues a certificate, which takes minutes to an hour. Poll
+   `gh api repos/mcfredrick/<subdomain>/pages --jq .https_certificate.state` until it reads
+   `approved`, then `gh api -X PUT repos/mcfredrick/<subdomain>/pages -F https_enforced=true`.
+   Don't leave this step until it's done. On plain http, iPhone Safari has no AudioWorklet, so
+   Godot fails to start and the page stays blank. Browsers also store http and https data
+   separately, so players' saves split between the two. The shared deploy workflow fails any run
+   where the certificate is approved but HTTPS is not enforced. Confirm that
+   `http://<subdomain>.crap.games/` answers with a 301 to `https://`, then boot-check the https URL
+   as in section 6. Saves made on the github.io URL stay there, since storage is per origin.
 3. **Registry secret.** The register workflow needs `REGISTRY_UPDATE_TOKEN` (a PAT with `repo` and
    `workflow` scopes). The user sets it with
    `! gh secret set REGISTRY_UPDATE_TOKEN -R mcfredrick/<subdomain>`, which prompts for the value.
